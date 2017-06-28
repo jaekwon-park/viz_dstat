@@ -42,7 +42,10 @@ fi
   
 cd $HTML_DIR
 
-echo Starting web server--point your browser to http://localhost:12121
+for i in $(ip a | grep "inet " | grep -v  "127.0.0.1" | awk '{print $2}' | awk -F/ '{print $1}')
+do
+	echo Starting web server--point your browser to http://$i:12121
+done
 echo 
 python -m SimpleHTTPServer 12121 2> http_log&
 SRV_PID=$!
