@@ -1,32 +1,22 @@
-var time0 = -1,
-    header_lines; // Used in error message in parse_line()
-
 var parse_line = function() {
   var line = arguments[0],
   i = arguments[1],
   factor = arguments[2],
+  year = new Date().getFullYear(),
   day,
   month,
   time,
   arr,
-  time_ms;
-  
+  time_str;
+
   try {
     day = line.time.split('-')[0];
     month = line.time.split('-')[1].split(' ')[0];
-    time = line.time.split(' ')[1].split(':');
+    time = line.time.split(' ')[1];
     arr = [];
-    //time_str = "2015-" + month + '-' + day + ' ' + time
-    time_ms = new Date ("2015", month, day , time[0], time[1], time[2]);
-    //console.log(time_str);
-    //time_ms = Date.parse(time_str);
-    //console.log(time_ms);
-    if (time0 == -1) {
-      time0 = time_ms;
-    }
-    console.log((time_ms - time0) / 1000);
-    arr.push((time_ms - time0) / 1000);
-
+    time_str = year + '/' +  month + '/' + day + ' ' + time
+//    console.log(time_str);
+    arr.push(new Date(time_str));
     for (var i = 3; i < arguments.length; i++) {
       arr.push(factor * line[arguments[i]]);
     }
@@ -36,11 +26,12 @@ var parse_line = function() {
     err_str += JSON.stringify(line) + "<br>" + err.message;
     $("#id_error").html(err_str);
   }
+//  console.log(JSON.stringify(arr));
   return arr
 }
 
 function load_csv() {
-  //Read csv data 
+  //Read csv data
   //console.log('load_csv');
   $.ajax({
     type: "GET",
@@ -60,15 +51,17 @@ function load_csv() {
       var labels = lines[i],
       header = lines.slice(0, i-2),
       body = lines.slice(i, lines.length);
-      
+      console.log(header);
+
       header = header.join([separator = '<br>']);
       $("#id_header").html(header);
       header_lines = i;  // Used in error message in parse_line()
 
       var csv_data = $.csv.toObjects(body.join([separator = '\n']));
-      // console.log(csv_data);
+       console.log(csv_data);
       cpu_data = csv_data.map(
         function(x, i) {
+       console.log(x + i);
           return parse_line(x, i, 1, "usr", "sys", "idl", "wai", "hiq", "siq");
         }
       );
@@ -102,9 +95,9 @@ function load_csv() {
           return parse_line(x, i, 1, "in", "out");
         }
       );
-        
-      csv_chart(cpu_data, "id_cpu", "CPU", ["time", "user", "system", "idle", "wait", "hiq", "siq"], "Usage [ % ]")
-      csv_chart(mem_data, "id_mem", "Memory", ["time", "used", "buff", "cache", "free"], "Usage [ GB ]")
+
+      csv_chart(cpu_data, "id_cpu", "CPU", ["datetime", "user", "system", "idle", "wait", "hiq", "siq"], "Usage [ % ]")
+      csv_chart(mem_data, "id_mem", "Memory", ["date", "used", "buff", "cache", "free"], "Usage [ GB ]")
       csv_chart(io_data, "id_io", "IO", ["time", "read", "write"], "Usage [ MB/s ]")
       csv_chart(net_data, "id_net", "Network", ["time", "recv", "send"], "Usage [ MB/s ]")
       csv_chart(sys_data, "id_sys", "System", ["time", "interrupts", "context switches"], "")
@@ -123,12 +116,12 @@ function csv_chart(data, id, title, labels, ylabel) {
   //console.log(data);
   chart = new Dygraph(
     document.getElementById(id),
-    data, 
+    data,
     {
       labels: labels,
       //http://colorbrewer2.org/  <- qualitative, 6 classes
       colors: ['rgb(228,26,28)','rgb(55,126,184)','rgb(77,175,74)','rgb(152,78,163)','rgb(255,127,0)','rgb(141,211,199)'],
-      xlabel: "Elapsed time [ sec ]",
+      xlabel: "Time [ H:M:S ]",
       ylabel: ylabel,
       strokeWidth: 2,
       legend: 'always',
